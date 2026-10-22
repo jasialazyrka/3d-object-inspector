@@ -44,6 +44,12 @@ const GATES = [
     script: 'test:unit',
     skip: !hasUnitTests ? 'no unit tests yet' : null,
   },
+  // Must follow test:unit, which writes the coverage summary this gate reads.
+  {
+    name: 'coverage-policy',
+    script: 'gate:coverage-policy',
+    skip: !hasUnitTests ? 'no unit tests yet' : null,
+  },
   { name: 'ac-trace', script: 'gate:ac-trace', fast: false },
   { name: 'core-purity', script: 'gate:core-purity', fast: false },
   {

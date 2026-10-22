@@ -29,7 +29,7 @@ Edit is blocked is a shell equivalent.
 **Refinements forced by use.** Interpreters (`node`, `python`) are not writes by themselves —
 running the harness is the point of the harness — so they are judged on inline-code flags. And
 forbidden-command rules are scoped to a shell segment's leading command, because an earlier
-whole-string scan false-positived on a doc comment that merely *mentioned* `--no-verify`.
+whole-string scan false-positived on a doc comment that merely _mentioned_ `--no-verify`.
 
 ## ADR-004 — The lock is armed by a human-created sentinel
 
@@ -84,3 +84,56 @@ matters — that the object rotated by the expected amount.
 
 **Why.** Phase 0 shipped a complete harness against an empty `src/`. A green tick for a test suite
 that does not exist is the exact dishonesty this harness is built to prevent.
+
+## ADR-010 — Coverage is governed by an explicit per-directory policy
+
+**Decision.** `vitest.config.ts` configures no thresholds. `scripts/check-coverage-policy.mjs`
+declares one per directory: `src/core` 100%, `src/app` and `src/testing` verified via E2E. A
+directory under `src/` with no declared policy fails the gate.
+
+**Why.** The original single global 85% threshold was not merely wrong, it was **unsatisfiable**.
+It demanded 85% unit coverage across `src/`, while AGENTS.md §7 says the render shell is asserted
+through Playwright. With one unit-coverable function in the codebase, 85% required `src/` to contain
+at most one function in total. The implementer proved this arithmetically and correctly refused to
+inflate the implementation or hide code in a coverage-excluded file to get past it.
+
+Vitest's per-glob thresholds were the next attempt and do not exclude matched files from the global
+figure in v5, so the policy moved into an explicit gate.
+
+**The gate is stricter than the number it replaced.** A global threshold quietly tolerates new
+untested code as long as the average holds. This fails outright on an undeclared directory, so
+exempting code is a visible, reviewable edit rather than a number drifting down.
+
+**Lesson worth keeping.** A gate nobody has tested is not a gate. The `100%` threshold on
+`src/core` had been written as a glob key that matched nothing — vitest compares globs against
+absolute paths — so it was **silently inert** from the moment it was written, and would have stayed
+inert until someone noticed `src/core` was never actually checked. Gates need their own red test:
+this one was verified by pointing it at an undeclared directory and confirming it fails.
+
+## ADR-011 — The Stop gate covers subagents, and blocking mid-loop is correct
+
+**Decision.** `stop-gate.mjs` is wired to **both** `Stop` and `SubagentStop`.
+
+**Why.** Gating only the main agent left the real risk uncovered. The orchestrator delegates the
+writing to `test-author` and `implementer`; those are the agents that could stop with a red suite
+and report success, and nothing but a human reading the report would have caught it.
+
+**A correction.** When the hook repeatedly blocked the orchestrator mid-loop, the first instinct was
+to call that a defect and loosen the phase inference. It was not a defect: the implementation was
+genuinely incomplete and the suite was genuinely red, so the hook was telling the truth. The noise
+is the cost of the guarantee, and the right response was to extend the gate to subagents rather than
+weaken it for the orchestrator. The only refinement kept was recognising a `test(...)` commit at
+HEAD with no source changes as a legitimately red state, since the loop commits tests first by
+design.
+
+## ADR-012 — `permissions.deny` is absolute, and that is the point
+
+**Observation.** The sentinel in `.harness/locked` disarms the PreToolUse hook, but
+`permissions.deny` in `.claude/settings.json` is enforced by the runner itself and ignores the
+sentinel entirely. Editing a protected config with `sed` stays blocked even while the harness is
+unlocked.
+
+**Kept deliberately.** It is friction — harness edits have to go through a tool the deny list does
+not cover. But a backstop that could be switched off by the thing it is backstopping is not a
+backstop. The force-push rules work the same way, which is why rewriting the published history was
+handed back to a human rather than performed by an agent.

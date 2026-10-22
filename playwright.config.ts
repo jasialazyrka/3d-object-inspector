@@ -26,8 +26,10 @@ export default defineConfig({
   ],
   // Dev server, not a production preview: the test seam (src/testing/seam.ts) is deliberately
   // stripped from production builds, and E2E asserts behaviour through that seam.
+  // --host 127.0.0.1 is load-bearing: without it Vite binds IPv6-only on macOS, so this config's
+  // 127.0.0.1 poll never connects and every run dies on the webServer timeout.
   webServer: {
-    command: `npm run dev -- --port ${PORT} --strictPort`,
+    command: `npm run dev -- --host 127.0.0.1 --port ${PORT} --strictPort`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

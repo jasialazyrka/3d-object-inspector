@@ -96,8 +96,13 @@ A change is done only when **all** of these pass:
 npm run verify     # every gate, same locally and in CI
 ```
 
-which is: `typecheck` · `lint` · `format` · `test:unit` (coverage: 100% on `src/core`, 85% overall)
-· `gate:ac-trace` · `gate:core-purity` · `test:e2e`.
+which is: `typecheck` · `lint` · `format` · `test:unit` · `gate:coverage-policy` ·
+`gate:ac-trace` · `gate:core-purity` · `test:e2e`.
+
+Coverage is governed by an explicit per-directory policy, not one global number: `src/core` must be
+at 100% on every metric, while `src/app` and `src/testing` are verified through E2E instead. A new
+directory under `src/` with no declared policy fails the gate — untested code cannot arrive
+unnoticed.
 
 Fast inner loop, used by the Stop hook: `npm run verify:fast` (typecheck + lint + unit).
 

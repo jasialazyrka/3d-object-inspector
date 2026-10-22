@@ -92,10 +92,10 @@ leading command, and denies protected-path writes through any of them.
 
 Two refinements came out of actually using it:
 
-- **Interpreters are not writes.** `node scripts/verify.mjs` *runs* the harness, which is the point
+- **Interpreters are not writes.** `node scripts/verify.mjs` _runs_ the harness, which is the point
   of the harness. Interpreters are judged on inline-code flags (`-e`, `-c`) instead.
 - **Forbidden-command rules are segment-scoped.** An earlier version scanned the whole command
-  string, so a doc comment that merely *mentioned* `--no-verify` tripped the rule. Text is data, not
+  string, so a doc comment that merely _mentioned_ `--no-verify` tripped the rule. Text is data, not
   a command.
 
 ### The lock is armed by a human sentinel, not by file existence
@@ -144,19 +144,23 @@ Playwright asserts through it, plus a blank-canvas check to catch total render f
 
 ## Demo script
 
-| # | Show | Command |
-|---|---|---|
-| 1 | The app | `npm run dev`, drag the object |
-| 2 | All gates green | `npm run verify` |
-| 3 | Traceability has teeth | arm a spec with no tests → `npm run gate:ac-trace` names the orphan criteria |
-| 4 | The goalpost guard, Edit | ask an agent to edit `specs/SPEC-001-rotation-core.md` → denied with explanation |
-| 5 | The guard covers Bash too | the same via `sed -i` → denied |
-| 6 | CI does not negotiate | a PR touching a protected path → `protected-paths` job fails without the `harness-change` label |
-| 7 | Test-first is verified | the test-only commit is red; the implementation commit is green |
-| 8 | Core purity | add `import * as THREE from 'three'` to `src/core` → ESLint and `core-purity` both fail |
+| #   | Show                      | Command                                                                                         |
+| --- | ------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1   | The app                   | `npm run dev`, drag the object                                                                  |
+| 2   | All gates green           | `npm run verify`                                                                                |
+| 3   | Traceability has teeth    | arm a spec with no tests → `npm run gate:ac-trace` names the orphan criteria                    |
+| 4   | The goalpost guard, Edit  | ask an agent to edit `specs/SPEC-001-rotation-core.md` → denied with explanation                |
+| 5   | The guard covers Bash too | the same via `sed -i` → denied                                                                  |
+| 6   | CI does not negotiate     | a PR touching a protected path → `protected-paths` job fails without the `harness-change` label |
+| 7   | Test-first is verified    | the test-only commit is red; the implementation commit is green                                 |
+| 8   | Core purity               | add `import * as THREE from 'three'` to `src/core` → ESLint and `core-purity` both fail         |
 
 ## Limitations — stated, not hidden
 
+- **A gate nobody has tested is not a gate.** The 100% threshold on `src/core` was written as a
+  vitest glob key that matched nothing, so it was silently inert from the day it was written. Every
+  gate here has since been checked by making it fail on purpose; that practice matters more than any
+  individual gate.
 - **`gate:ac-trace` proves a test exists per criterion. It cannot prove the test asserts anything.**
   `it('[AC-001-3] ...', () => {})` satisfies it. **Mutation testing (Stryker over `src/core`) is the
   single highest-value next gate**, and the one that would close this hole.

@@ -7,7 +7,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: false,
     include: ['tests/unit/**/*.test.{ts,tsx}'],
-    // Phase 0 ships a complete harness with an empty src/. verify.mjs reports the unit gate as
+    // Phase 0 shipped a complete harness with an empty src/. verify.mjs reports the unit gate as
     // SKIP in that state rather than inventing a pass.
     passWithNoTests: true,
     coverage: {
@@ -15,21 +15,17 @@ export default defineConfig({
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/main.tsx', 'src/**/*.d.ts'],
       reporter: ['text', 'json-summary'],
-      // src/core is pure, deterministic and framework-free, so there is no excuse for an untested
-      // branch in it. The lower global figure covers the React shell, where behaviour is asserted
-      // through E2E instead.
-      thresholds: {
-        lines: 85,
-        branches: 85,
-        functions: 85,
-        statements: 85,
-        'src/core/**/*.ts': {
-          lines: 100,
-          branches: 100,
-          functions: 100,
-          statements: 100,
-        },
-      },
+      // Thresholds are NOT configured here. Vitest's single global threshold cannot express this
+      // project's architecture: src/core is verified by unit tests to 100%, while src/app and
+      // src/testing are verified through Playwright (AGENTS.md §7), so a global unit-coverage
+      // figure over all three is meaningless — and no implementation could ever satisfy it.
+      //
+      // Vitest's per-glob thresholds were tried first and do not exclude matched files from the
+      // global figure in v5, so the policy is enforced explicitly by the gate instead:
+      //   scripts/check-coverage-policy.mjs  (npm run gate:coverage-policy)
+      //
+      // That gate is also stricter than a global number: it fails on any NEW directory under src/
+      // that has no declared policy, so untested code cannot arrive unnoticed.
     },
   },
 });

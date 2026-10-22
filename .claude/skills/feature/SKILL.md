@@ -35,6 +35,11 @@ node scripts/spec-status.mjs SPEC-<id> in-progress
 This is a ratchet: it only moves a spec forwards, and it arms `gate:ac-trace` over every criterion
 in that spec. From this point, a missing test is a build failure.
 
+**Do not commit this on its own, and do not push it.** Arming a spec whose tests do not exist yet
+makes every one of its criteria an orphan, so a commit containing only the arming is red by
+construction — and pushing it turns `main` red. The arming is committed in step 4, together with
+the tests that satisfy it.
+
 ### 3. Author the failing tests (red)
 
 Delegate to the **test-author** subagent. Give it: the spec path, the full criteria list, and the

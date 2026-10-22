@@ -17,6 +17,7 @@
     "test:unit": "vitest run --coverage",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
+    "gate:coverage-policy": "node scripts/check-coverage-policy.mjs",
     "gate:ac-trace": "node scripts/check-ac-traceability.mjs",
     "gate:core-purity": "node scripts/check-core-purity.mjs",
     "gate:protected-paths": "node scripts/check-protected-paths.mjs",
