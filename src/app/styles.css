@@ -10,13 +10,74 @@ body {
   overflow: hidden;
 }
 
-.app-title {
+.hud {
   position: absolute;
+  top: 0;
+  left: 0;
   /* The R3F canvas container follows this element in DOM order, so without an explicit stacking
-     context the title paints underneath it — present in the DOM, invisible to a user. */
+     context the overlay paints underneath it — present in the DOM, invisible and unclickable. */
   z-index: 1;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   padding: 0.75rem 1rem;
+  /* The canvas fills the viewport and the drag gesture covers all of it, so the overlay itself is
+     transparent to the pointer; only the controls inside it take events. */
+  pointer-events: none;
+}
+
+.hud-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.hud-button,
+.readout {
+  pointer-events: auto;
+}
+
+.hud-button {
+  border: 1px solid #39508c;
+  border-radius: 0.3rem;
+  background: #16204a;
+  padding: 0.35rem 0.8rem;
+  color: #c8d6ff;
+  font:
+    600 0.8rem/1 system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+.readout {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  border: 1px solid #39508c;
+  border-radius: 0.3rem;
+  background: #16204a;
+  padding: 0.35rem 0.8rem;
+  color: #c8d6ff;
+  font:
+    0.8rem/1.6 ui-monospace,
+    monospace;
+}
+
+.readout-row {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.readout-label {
+  color: #8ba0d8;
+}
+
+.readout-value {
+  margin: 0;
+}
+
+.app-title {
+  margin: 0;
   color: #c8d6ff;
   font:
     600 0.9rem/1 system-ui,

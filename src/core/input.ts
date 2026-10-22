@@ -86,3 +86,49 @@ export const endDrag = (
 
   return { orientation: { ...state.orientation }, velocity: { ...velocity } };
 };
+
+/**
+ * SPEC-003 — keyboard input mapping.
+ *
+ * `key` is the plain `KeyboardEvent.key` string and the modifier state arrives as a value: the
+ * event itself stays in src/app, so this module remains DOM-free (AGENTS.md §3).
+ */
+
+/** The modifier state of a key press; Shift is the only one that changes the step (AC-003-3). */
+export type KeyModifiers = { shift: boolean };
+
+/** Radians turned by one unshifted arrow press. */
+export const DEFAULT_KEY_STEP = 0.05;
+
+/** The fixed factor greater than 1 that Shift multiplies the step by (AC-003-3). */
+export const SHIFT_STEP_MULTIPLIER = 4;
+
+/**
+ * Maps the four arrow keys to a rotation delta in radians, agreeing with the pointer's sign
+ * convention: ArrowRight yaws as a rightward drag, ArrowDown pitches as a downward one
+ * (AC-003-2). Any other key — the reset key included — is not a rotation and returns null
+ * (AC-003-4). Key names are matched exactly, as the platform spells them.
+ */
+export const keyToRotation = (key: string, modifiers: KeyModifiers): AngularVelocity | null => {
+  const amount = DEFAULT_KEY_STEP * (modifiers.shift ? SHIFT_STEP_MULTIPLIER : 1);
+
+  switch (key) {
+    case 'ArrowRight':
+      return { x: 0, y: amount };
+    case 'ArrowLeft':
+      return { x: 0, y: -amount };
+    case 'ArrowDown':
+      return { x: amount, y: 0 };
+    case 'ArrowUp':
+      return { x: -amount, y: 0 };
+    default:
+      return null;
+  }
+};
+
+/**
+ * True for the reset key, in either case (AC-003-5). A reset is a jump to a known state rather
+ * than a delta, so it is a predicate beside `keyToRotation` instead of a case inside it; the jump
+ * itself is `reset` from src/core/rotation.ts.
+ */
+export const isResetKey = (key: string): boolean => key === 'r' || key === 'R';

@@ -110,3 +110,20 @@ export const toEulerDegrees = (
     roll: wrapDegrees(Math.atan2(m10, m11) * DEGREES_PER_RADIAN),
   };
 };
+
+/**
+ * Rounds the Euler decomposition to whole degrees for the readout (AC-003-7). The modulo covers
+ * the single boundary case: `toEulerDegrees` returns [0, 360), so an angle from 359.5 upwards
+ * rounds to 360, which reads back as 0.
+ */
+export const toWholeDegrees = (
+  state: RotationState,
+): { yaw: number; pitch: number; roll: number } => {
+  const { yaw, pitch, roll } = toEulerDegrees(state);
+
+  return {
+    yaw: Math.round(yaw) % 360,
+    pitch: Math.round(pitch) % 360,
+    roll: Math.round(roll) % 360,
+  };
+};

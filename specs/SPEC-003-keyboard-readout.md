@@ -1,7 +1,7 @@
 ---
 id: SPEC-003
 title: Keyboard control, reset and degree readout
-status: in-progress
+status: done
 ---
 
 # SPEC-003 — Keyboard control, reset and degree readout
