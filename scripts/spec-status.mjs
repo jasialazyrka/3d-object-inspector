@@ -27,10 +27,26 @@ if (!ORDER.includes(nextStatus)) {
   process.exit(2);
 }
 
+/**
+ * Only real spec files, and only their LEADING frontmatter block.
+ *
+ * An earlier version searched every .md in specs/ for `id: <SPEC-ID>` anywhere in the file. That
+ * matched the example frontmatter inside a fenced code block in specs/README.md and rewrote the
+ * documentation instead of the spec. Hence both narrowings: the filename must look like a spec,
+ * and the id must come from the frontmatter at the very top of the file.
+ */
+function leadingFrontmatter(text) {
+  const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+  return match ? match[1] : null;
+}
+
 const file = readdirSync('specs')
-  .filter((f) => f.endsWith('.md'))
+  .filter((f) => /^SPEC-\d{3}-.*\.md$/.test(f))
   .map((f) => join('specs', f))
-  .find((f) => new RegExp(`^id:\\s*${specId}\\s*$`, 'm').test(readFileSync(f, 'utf8')));
+  .find((f) => {
+    const fm = leadingFrontmatter(readFileSync(f, 'utf8'));
+    return fm !== null && new RegExp(`^id:\\s*${specId}\\s*$`, 'm').test(fm);
+  });
 
 if (!file) {
   console.error(`No spec with id "${specId}" found in specs/`);
@@ -38,7 +54,12 @@ if (!file) {
 }
 
 const before = readFileSync(file, 'utf8');
-const statusLine = /^status:\s*(.+)$/m.exec(before);
+const frontmatter = leadingFrontmatter(before);
+if (frontmatter === null) {
+  console.error(`${file} has no leading frontmatter block`);
+  process.exit(2);
+}
+const statusLine = /^status:\s*(.+)$/m.exec(frontmatter);
 if (!statusLine) {
   console.error(`${file} has no "status:" line in its frontmatter`);
   process.exit(2);

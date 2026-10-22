@@ -61,13 +61,48 @@ const testsJustCommitted = /^test\(/.test(headSubject()) && !touchesSrc;
 
 const red = (touchesTests && !touchesSrc) || testsJustCommitted;
 
-const scripts = red ? ['typecheck', 'lint'] : ['verify:fast'];
+/**
+ * During the red phase the tests import modules the implementer has not written yet, so tsc
+ * reports TS2307 "cannot find module". Treating that as a failure is what pressures an agent into
+ * writing a .d.ts shim to silence it — a shim that then lets typecheck pass on a genuinely
+ * unresolvable import for the rest of the project's life.
+ *
+ * So the red phase tolerates TS2307 and nothing else: a real type error in a test file still
+ * blocks, while an import of a planned module does not.
+ */
+function typecheckAllowingMissingModules(cwd) {
+  const run = spawnSync('npm', ['run', '-s', 'typecheck'], { cwd, encoding: 'utf8' });
+  if (run.status === 0) return null;
+
+  const output = (run.stdout ?? '') + (run.stderr ?? '');
+  const errors = output.split('\n').filter((line) => /error TS\d+:/.test(line));
+  const other = errors.filter((line) => !/error TS2307:/.test(line));
+
+  if (errors.length > 0 && other.length === 0) {
+    process.stderr.write(
+      `note: typecheck reports ${errors.length} unresolved import(s) (TS2307), expected during\n` +
+        `the test-first phase. Do NOT add a .d.ts shim to silence them; the implementation will\n` +
+        `resolve them.\n`,
+    );
+    return null;
+  }
+  return `--- npm run typecheck ---\n${output}`.trim();
+}
 
 const failures = [];
-for (const script of scripts) {
-  const run = spawnSync('npm', ['run', '-s', script], { cwd: root, encoding: 'utf8' });
+
+if (red) {
+  const typecheckFailure = typecheckAllowingMissingModules(root);
+  if (typecheckFailure !== null) failures.push(typecheckFailure);
+
+  const lint = spawnSync('npm', ['run', '-s', 'lint'], { cwd: root, encoding: 'utf8' });
+  if (lint.status !== 0) {
+    failures.push(`--- npm run lint ---\n${(lint.stdout ?? '') + (lint.stderr ?? '')}`.trim());
+  }
+} else {
+  const run = spawnSync('npm', ['run', '-s', 'verify:fast'], { cwd: root, encoding: 'utf8' });
   if (run.status !== 0) {
-    failures.push(`--- npm run ${script} ---\n${(run.stdout ?? '') + (run.stderr ?? '')}`.trim());
+    failures.push(`--- npm run verify:fast ---\n${(run.stdout ?? '') + (run.stderr ?? '')}`.trim());
   }
 }
 

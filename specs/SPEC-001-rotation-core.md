@@ -1,7 +1,7 @@
 ---
 id: SPEC-001
 title: Rotation core — pure quaternion state with inertia damping
-status: planned
+status: in-progress
 ---
 
 # SPEC-001 — Rotation core
