@@ -1,7 +1,7 @@
 ---
 id: SPEC-002
 title: Pointer drag with inertia
-status: planned
+status: in-progress
 ---
 
 # SPEC-002 — Pointer drag with inertia
