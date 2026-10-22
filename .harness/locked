@@ -1,0 +1,4 @@
+Harness armed 2026-10-22T11:31:17Z
+
+The presence of this file activates .claude/hooks/guard-protected-paths.mjs.
+It lives inside a protected path, so no agent can remove it.

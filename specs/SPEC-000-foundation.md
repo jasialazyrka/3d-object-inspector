@@ -1,7 +1,7 @@
 ---
 id: SPEC-000
 title: Foundation — canvas, render loop, test seam
-status: planned
+status: in-progress
 ---
 
 # SPEC-000 — Foundation
