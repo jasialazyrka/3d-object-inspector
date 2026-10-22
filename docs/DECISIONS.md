@@ -174,3 +174,42 @@ stock settings ran 11/11 green, and CI uses `workers: 1` with one retry.
 **The general lesson.** When an e2e test is flaky, the first question is whether the _test_ is
 asserting something the application never promised under those conditions. Retrying would have
 hidden a real misreading of the contract.
+
+## ADR-015 — The red-phase typecheck allowance is too narrow, and the agent was right not to route around it
+
+**The gap.** The Stop hook's red phase tolerates TS2307 "cannot find module" but not TS2305 "has no
+exported member". `tsc` distinguishes them only by whether the _file_ exists, so the allowance lets
+the test-first phase introduce a **new** module and not **extend** an existing one.
+
+**What happened.** SPEC-003's tests extend `src/core/input.ts` with keyboard mapping. Typecheck
+failed with six TS2305s and the Stop hook blocked. Two workarounds were available: a `.d.ts` shim, or
+splitting keyboard mapping into a new `src/core/keyboard.ts` purely to turn a TS2305 into a tolerated
+TS2307. The test-author took neither and reported the gap instead.
+
+**That refusal is the point.** The second temptation is the dangerous one, because it looks like
+architecture rather than evasion. Keyboard mapping _is_ input mapping — same output type, same sign
+conventions, the literal sibling of `pointerDeltaToRotation` — so splitting it would have let an
+error-code quirk choose the file layout. A gate that quietly pushes agents toward file sprawl is
+worse than the problem it was solving.
+
+**Status: open, deliberately.** The fix is to tolerate TS2305 as well, but only where the error
+names a module under `src/`. Not TS2339: a missing property on a type is a real type error far more
+often than it is a test-first artifact. The gap did not block delivery — it affects the test-author
+role only, since the implementer works in the green phase where the exports exist — so it was left
+documented rather than rushed in on a deadline.
+
+## ADR-016 — The DOM a library gives you is not the DOM you asked for
+
+**What happened.** AC-003-1 requires `tabIndex` and an accessible name on the canvas. R3F v9's
+`CanvasProps extends React.HTMLAttributes<HTMLDivElement>` and spreads props onto its **wrapper
+div**, so passing `tabIndex`/`aria-label` as props puts them on the div, not the canvas. The e2e
+asserts against `locator('canvas')`, so it failed — correctly. The attributes had to be set through
+a ref to the real canvas element.
+
+**Why it is worth recording.** This is the third time in this project that a gate caught something a
+careful reading of the source would have called correct: handlers attached inside `Scene` were
+swallowed before R3F committed children, the HUD painted underneath the canvas, and now props landed
+on a wrapper. Each was invisible to unit tests and to review, and each was caught by an assertion
+against the real rendered DOM. It is the strongest argument in this repo for keeping e2e tests that
+assert behaviour rather than structure — and for the seam, which makes those assertions precise
+instead of pixel-based.

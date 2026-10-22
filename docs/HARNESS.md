@@ -157,6 +157,11 @@ Playwright asserts through it, plus a blank-canvas check to catch total render f
 
 ## Limitations — stated, not hidden
 
+- **The red-phase typecheck allowance is too narrow (open).** It tolerates TS2307 "cannot find
+  module" but not TS2305 "has no exported member", so the test-first phase can introduce a new
+  module but not extend an existing one. Left open deliberately on a deadline; it affects only the
+  test-author role — see ADR-015, which is also the clearest example in this repo of an agent
+  refusing to route around a gate when routing around it would have looked like architecture.
 - **Observability code is production code.** The test seam shipped returning a hardcoded identity
   quaternion, which would have made every drag assertion in SPEC-002 pass against a constant. No
   gate here can detect that: a test existed, it cited its criterion, and the seam was covered. Only

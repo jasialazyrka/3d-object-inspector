@@ -142,9 +142,10 @@ against an empty `src/`, and said so.
 
 ## Scope
 
-Delivered: `SPEC-000` foundation, `SPEC-001` rotation core, `SPEC-002` pointer drag — the
-application is interactively rotatable by mouse and touch, with inertia on release. 78 unit tests,
-12 e2e tests, 27 acceptance criteria all traced to tests.
+Delivered: all four specs — `SPEC-000` foundation, `SPEC-001` rotation core, `SPEC-002` pointer
+drag, `SPEC-003` keyboard control and readout. The object is rotatable by mouse, touch and keyboard,
+coasts to a stop when released, and reports its orientation live. **110 unit tests, 19 e2e tests, 36
+acceptance criteria all traced to tests**, and both `src/core` modules at 100% on every metric.
 Deferred with reasons in `specs/ROADMAP.md`: object switcher, view controls.
 
 See `AGENTS.md` for the rules agents work under, and `specs/README.md` for the specification format.
