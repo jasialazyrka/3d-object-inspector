@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # The definition of done, run exactly as an agent runs it locally. One command, no CI-only steps,
+  # so there is no way for local and CI to disagree about what "green" means.
+  verify:
+    name: verify (all gates)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Split out so specification traceability reads as its own check in the PR, rather than being
+  # buried in the verify log.
+  harness:
+    name: harness gates (traceability, core purity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run gate:ac-trace
+      - run: npm run gate:core-purity
+
+  # The real guarantee behind the protected-path hook. A hook runs inside the agent's own process
+  # and is therefore advisory; this job runs outside it and cannot be talked round.
+  protected-paths:
+    name: protected paths (harness lock)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: git fetch origin ${{ github.base_ref }} --depth=1
+      - run: node scripts/check-protected-paths.mjs --base origin/${{ github.base_ref }}
+        env:
+          HARNESS_PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
