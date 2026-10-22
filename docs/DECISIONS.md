@@ -137,3 +137,40 @@ unlocked.
 not cover. But a backstop that could be switched off by the thing it is backstopping is not a
 backstop. The force-push rules work the same way, which is why rewriting the published history was
 handed back to a human rather than performed by an agent.
+
+## ADR-013 — A test seam that returns a constant makes every assertion through it vacuous
+
+**What happened.** `src/testing/seam.ts` shipped in SPEC-000 returning a hardcoded identity
+quaternion. That was correct while the object was static. By SPEC-002 it was a trap: the e2e suite
+asserts drag behaviour _through_ the seam, so had the seam kept returning a constant, every drag
+test would have passed against that constant. Green gates, nothing tested.
+
+**Decision.** The seam must report live state, and growing it is part of the spec that depends on
+it. `getRotation()` now returns the orientation reported each frame by the render shell.
+
+**Why it is worth an ADR.** This is the hollow-test failure mode arriving through the back door.
+`gate:ac-trace` cannot see it — a test citing AC-002-8 existed and passed. Coverage cannot see it —
+the seam was covered. Only reading what the assertion actually compares catches it. It is the
+clearest argument in this repo for mutation testing over `src/core`, and for treating observability
+code as production code rather than scaffolding.
+
+## ADR-014 — E2E flakiness is sometimes the test harness pausing, not the app
+
+**What happened.** AC-002-9 (the coast is observable after release) failed roughly one run in four,
+and the maths was never wrong. Under load, Playwright's CDP round trips leave 150–370 ms of genuine
+stillness between the last `mouse.move` and `mouse.up`. The implementation was reading that interval
+as the release sample, so `dtMs` exceeded the 250 ms release window and the core _correctly_
+returned zero velocity: the pointer really had paused before release.
+
+**Decision.** Sample `RecentMovement` as the trailing release window — the position at release
+versus the newest sample at or before the window opening — so both ends are exact and the duration
+is the window itself, never the scheduler's latency.
+
+**Residual, stated rather than hidden.** Under heavy oversubscription (36 concurrent SwiftShader
+tests) the harness can still leave more than 250 ms of real stillness, in which case zero velocity
+is the contractually correct answer and the test's premise is void. About 1 run in 20 in that state;
+stock settings ran 11/11 green, and CI uses `workers: 1` with one retry.
+
+**The general lesson.** When an e2e test is flaky, the first question is whether the _test_ is
+asserting something the application never promised under those conditions. Retrying would have
+hidden a real misreading of the contract.

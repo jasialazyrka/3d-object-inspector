@@ -157,6 +157,14 @@ Playwright asserts through it, plus a blank-canvas check to catch total render f
 
 ## Limitations — stated, not hidden
 
+- **Observability code is production code.** The test seam shipped returning a hardcoded identity
+  quaternion, which would have made every drag assertion in SPEC-002 pass against a constant. No
+  gate here can detect that: a test existed, it cited its criterion, and the seam was covered. Only
+  reading what the assertion compares catches it — see ADR-013.
+- **One e2e test has a known flake envelope.** AC-002-9 asserts an observable coast after release;
+  under heavy oversubscription the test harness itself can pause longer than the 250 ms release
+  window, where zero velocity is contractually correct and the test's premise is void. ~1 run in 20
+  in that state, green at stock settings. Documented rather than retried away — see ADR-014.
 - **A gate nobody has tested is not a gate.** The 100% threshold on `src/core` was written as a
   vitest glob key that matched nothing, so it was silently inert from the day it was written. Every
   gate here has since been checked by making it fail on purpose; that practice matters more than any
