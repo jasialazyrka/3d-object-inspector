@@ -24,3 +24,9 @@ body {
   letter-spacing: 0.04em;
   pointer-events: none;
 }
+
+canvas {
+  /* The drag gesture is the whole interaction, so the browser must not claim touch moves for
+     scrolling or pinch-zoom instead of delivering them as pointer events (AC-002-10). */
+  touch-action: none;
+}
