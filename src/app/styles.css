@@ -12,6 +12,9 @@ body {
 
 .app-title {
   position: absolute;
+  /* The R3F canvas container follows this element in DOM order, so without an explicit stacking
+     context the title paints underneath it — present in the DOM, invisible to a user. */
+  z-index: 1;
   margin: 0;
   padding: 0.75rem 1rem;
   color: #c8d6ff;
