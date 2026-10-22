@@ -192,11 +192,9 @@ conventions, the literal sibling of `pointerDeltaToRotation` — so splitting it
 error-code quirk choose the file layout. A gate that quietly pushes agents toward file sprawl is
 worse than the problem it was solving.
 
-**Status: open, deliberately.** The fix is to tolerate TS2305 as well, but only where the error
-names a module under `src/`. Not TS2339: a missing property on a type is a real type error far more
-often than it is a test-first artifact. The gap did not block delivery — it affects the test-author
-role only, since the implementer works in the green phase where the exports exist — so it was left
-documented rather than rushed in on a deadline.
+**Status: fixed.** The red phase now tolerates TS2305 as well, but only where the error names a
+module under `src/`. TS2339 is still not tolerated: a missing property on a type is a real type error
+far more often than it is a test-first artifact.
 
 ## ADR-016 — The DOM a library gives you is not the DOM you asked for
 
@@ -246,3 +244,48 @@ the notes are worth reading. Human review still owns that.
 **Backfilled, and labelled as such.** The first three entries were reconstructed from git history and
 the subagent reports after the fact, and say so. The SPEC-003 entry is the first written as part of
 the run it describes.
+
+## ADR-018 — `init.sh`: one definition of environment setup
+
+**Decision.** A single idempotent entry point — prerequisites, dependencies, the Playwright browser,
+and an integrity check of the harness itself. CI runs the same script rather than listing `npm ci`
+and the browser install separately.
+
+**Why.** The same argument as `npm run verify`: **if setup has two definitions, one of them is
+wrong.** Before this, a fresh machine needed somebody to remember the browser install — which is
+exactly how the first cold e2e run failed — and the CI workflow duplicated those steps, free to drift
+from what anyone actually ran locally.
+
+**The integrity check is the part worth keeping.** It fails if a harness file is missing, a hook does
+not parse, or `settings.json` references a hook that is not there. A missing hook does not announce
+itself: everything keeps working, the guard simply stops guarding, and the first sign is a gate that
+"passed". The harness is a guarantee only while it is present, and nothing else was checking that.
+
+**Completes the loop.** Initialization was the one step of the canonical harness shape — objective,
+init, run, verify, feedback, cleanup — that this project had never actually built.
+
+## ADR-019 — The guard's redirection scan read heredoc bodies as commands
+
+**What happened.** Writing `init.sh` was blocked because the script's own help text contained
+`> .harness/locked` in a hint about arming the lock. The redirection scan read the whole command
+string, heredoc body included, so a document _describing_ a write looked like one.
+
+**Decision.** Strip heredoc bodies before the redirection scan. Safe for this check specifically,
+because a heredoc's own target (`cat > specs/x <<'EOF'`) appears before the `<<` marker and survives.
+
+**Why it is the second instance of one mistake.** The identical class of false positive was already
+fixed for `FORBIDDEN_COMMANDS` by scoping rules to a segment's leading command — and the fix was not
+carried across to the redirection scan sitting ten lines above it. **Text that mentions a command is
+not that command**, and a guard that cannot tell the difference blocks documentation, which is a
+quiet tax on exactly the thing you want agents doing more of.
+
+## ADR-020 — ESLint `argsIgnorePattern`, and a workaround left in place
+
+**Decision.** `@typescript-eslint/no-unused-vars` now accepts the conventional `^_` prefix.
+
+**Why.** `reset(state)` ignores its argument _by contract_ (AC-001-8 says it returns identity
+regardless of input), which is not a mistake. Without the pattern, `src/core/rotation.ts` had to
+declare `reset` as a typed const to satisfy the rule — a lint rule choosing a declaration style.
+
+**The workaround stays.** It is valid, it is tested, and rewriting working application code for
+cosmetics is not the harness engineer's call to make unprompted. Future code can use `_state`.

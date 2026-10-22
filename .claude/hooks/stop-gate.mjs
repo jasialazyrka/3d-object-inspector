@@ -76,13 +76,30 @@ function typecheckAllowingMissingModules(cwd) {
 
   const output = (run.stdout ?? '') + (run.stderr ?? '');
   const errors = output.split('\n').filter((line) => /error TS\d+:/.test(line));
-  const other = errors.filter((line) => !/error TS2307:/.test(line));
+
+  /**
+   * Two shapes of "the implementer has not written it yet":
+   *   TS2307  cannot find module            — the test introduces a NEW module
+   *   TS2305  has no exported member        — the test EXTENDS an existing module
+   *
+   * tsc distinguishes them only by whether the file happens to exist, which is not an
+   * architectural signal. Tolerating only TS2307 meant the test-first phase could create a module
+   * but never extend one — and it pushed an agent toward splitting a module purely to convert the
+   * error code, which would have let a gate choose the file layout. TS2305 is therefore tolerated
+   * too, but only when the error names a module under src/.
+   *
+   * TS2339 ("property does not exist on type") is deliberately NOT tolerated: that is a real type
+   * error far more often than it is a test-first artifact.
+   */
+  const tolerated = (line) =>
+    /error TS2307:/.test(line) || (/error TS2305:/.test(line) && /['"][^'"]*src\//.test(line));
+  const other = errors.filter((line) => !tolerated(line));
 
   if (errors.length > 0 && other.length === 0) {
     process.stderr.write(
-      `note: typecheck reports ${errors.length} unresolved import(s) (TS2307), expected during\n` +
-        `the test-first phase. Do NOT add a .d.ts shim to silence them; the implementation will\n` +
-        `resolve them.\n`,
+      `note: typecheck reports ${errors.length} reference(s) to code that does not exist yet\n` +
+        `(TS2307/TS2305), expected during the test-first phase. Do NOT add a .d.ts shim and do NOT\n` +
+        `restructure modules to change the error code; the implementation will resolve them.\n`,
     );
     return null;
   }

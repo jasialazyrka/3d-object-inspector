@@ -40,6 +40,8 @@
   "permissions": {
     "deny": [
       "Edit(./AGENTS.md)",
+      "Edit(./init.sh)",
+      "Write(./init.sh)",
       "Edit(./claude-progress.md)",
       "Write(./claude-progress.md)",
       "Edit(./CLAUDE.md)",

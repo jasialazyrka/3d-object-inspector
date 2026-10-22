@@ -14,7 +14,8 @@ to close that route and then to make the first route fast.
 ```
 ┌─ HARNESS (humans only) ───────────────────────────────────────────────┐
 │                                                                       │
-│  AGENTS.md ────────── the rules. CLAUDE.md is a pointer to it, so     │
+│  init.sh ───────────── one definition of environment setup, shared with CI
+  AGENTS.md ────────── the rules. CLAUDE.md is a pointer to it, so     │
 │                       the harness is runner-agnostic                  │
 │                                                                       │
 │  specs/ ───────────── SPEC-000..003, acceptance criteria with stable  │
@@ -50,6 +51,10 @@ to close that route and then to make the first route fast.
 ## The loop
 
 ```
+  ./init.sh ─────────────────── prerequisites, dependencies, browser,
+        │                       and an integrity check of the harness itself.
+        │                       The same command CI runs.
+        v
   /feature SPEC-00X
         │
         ├─ 1. read spec ─────────────── ambiguous? STOP and report. Never reinterpret.

@@ -10,10 +10,13 @@ without a human in the middle.
 ## Quick start
 
 ```bash
-npm ci
+./init.sh          # prerequisites, dependencies, browser, harness integrity check
 npm run dev        # http://localhost:5173
 npm run verify     # every quality gate — the definition of done
 ```
+
+`./init.sh` is the same command CI runs, so local and CI setup cannot drift apart. It is idempotent,
+and `./init.sh --check` verifies an existing environment without installing anything.
 
 ## Harness architecture
 

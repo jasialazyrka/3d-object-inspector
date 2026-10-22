@@ -143,11 +143,29 @@ function pathsInEditTool(input) {
   ].filter((p) => typeof p === 'string' && p.length > 0);
 }
 
+/**
+ * A heredoc body is data, not command text.
+ *
+ * The redirection scan below would otherwise fire on any document that merely CONTAINS `> path` —
+ * which it did, on a help string inside init.sh that documented how to create `.harness/locked`.
+ * Same class of false positive as the one already fixed for FORBIDDEN_COMMANDS: text that mentions
+ * a command is not that command.
+ *
+ * Stripping the body is safe for this check specifically, because a heredoc's own redirection
+ * target (`cat > specs/x <<'EOF'`) appears before the `<<` marker and therefore survives.
+ */
+function stripHeredocBodies(command) {
+  return command.replace(
+    /<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1[\s\S]*?^\2[ \t]*$/gm,
+    '<<HEREDOC_BODY_STRIPPED',
+  );
+}
+
 function protectedWritesInBash(command) {
   const hits = [];
 
   // 1. output redirections: > file, >> file, 2> file, &> file
-  for (const m of command.matchAll(/(?:\d?>>?|&>)\s*['"]?([^\s'"&|;<>]+)/g)) {
+  for (const m of stripHeredocBodies(command).matchAll(/(?:\d?>>?|&>)\s*['"]?([^\s'"&|;<>]+)/g)) {
     const pattern = protectedBy(m[1]);
     if (pattern) hits.push({ path: m[1], pattern, how: 'shell redirection' });
   }

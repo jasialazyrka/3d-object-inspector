@@ -10,6 +10,19 @@ A browser 3D Object Inspector: an arbitrary 3D object the user rotates interacti
 application is deliberately small. The engineering value is in the harness: specs, gates and
 feedback loops.
 
+## 1a. Start here
+
+```bash
+./init.sh
+```
+
+Prerequisites, dependencies, the Playwright browser, and an integrity check of the harness itself —
+one command, idempotent, and the same one CI runs. If setup had two definitions, one of them would
+be wrong. `./init.sh --check` verifies without installing.
+
+It fails loudly if a harness file is missing, a hook does not parse, or `settings.json` references a
+hook that is not there: the harness is a guarantee only while it is actually present.
+
 ## 2. The two layers — and the one rule you must never break
 
 | Layer           | Paths                                                                                                                                                                                             | Who may write |

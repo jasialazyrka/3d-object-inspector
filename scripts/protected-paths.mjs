@@ -10,6 +10,7 @@
 export const PROTECTED_PATTERNS = [
   'AGENTS.md',
   'CLAUDE.md',
+  'init.sh',
   // Append-only, written solely by scripts/record-progress.mjs. A progress log an agent can edit
   // is a log the inconvenient truth disappears from.
   'claude-progress.md',
