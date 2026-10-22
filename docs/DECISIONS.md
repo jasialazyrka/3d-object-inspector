@@ -213,3 +213,36 @@ on a wrapper. Each was invisible to unit tests and to review, and each was caugh
 against the real rendered DOM. It is the strongest argument in this repo for keeping e2e tests that
 assert behaviour rather than structure — and for the seam, which makes those assertions precise
 instead of pixel-based.
+
+## ADR-017 — The progress log, and the gap it closes
+
+**The gap.** Specs record what must be true. Git records what changed. Neither records what was
+**learned on the way**. Every finding from the first four specs — `preserveDrawingBuffer`, handlers
+above `<Canvas>`, CDP latency landing in `dtMs`, the seam returning a constant — lived only in the
+orchestrator's context and survived only because a human copied it into a commit message by hand.
+Compact the context or end the session and it is gone. For a harness judged partly on **context
+management**, that was the weakest part of the design, and it was missing entirely until it was
+asked for.
+
+**Decision.** `claude-progress.md`, appended to at the end of every `/feature` run, with the same
+shape as the spec-status ratchet: agents get one narrow sanctioned write instead of general access.
+
+- The log is a **protected path**, so `scripts/record-progress.mjs` is the only way to write it.
+- It is **append-only** — the recorder refuses any write that would alter an existing entry.
+- **Gate results are measured by the recorder, not typed by the agent.** It runs the gates itself and
+  embeds what it observed, so an entry cannot claim green while red.
+- **Notes are mandatory**; an entry without them is refused.
+- `gate:progress` fails if a spec reached `done` without an entry, which is what makes the cleanup
+  step part of the harness rather than a convention. Conventions are the first thing dropped when a
+  run gets long.
+
+**Why append-only matters most.** A progress log an agent can rewrite is a log the inconvenient truth
+disappears from — the same reasoning that puts `.harness/locked` inside a protected path. The entries
+that matter are the ones recording that something went wrong.
+
+**Honest limitation.** Like `gate:ac-trace`, this proves an entry _exists_. It cannot judge whether
+the notes are worth reading. Human review still owns that.
+
+**Backfilled, and labelled as such.** The first three entries were reconstructed from git history and
+the subagent reports after the fact, and say so. The SPEC-003 entry is the first written as part of
+the run it describes.

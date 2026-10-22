@@ -91,7 +91,21 @@ git push origin main
 
 Push after every spec, so the repository is demo-ready at all times.
 
-### 8. Report
+### 8. Record what the run learned (cleanup)
+
+```bash
+node scripts/record-progress.mjs --spec SPEC-<id> --notes "..."
+git add claude-progress.md && git commit -m "chore(SPEC-<id>): record progress" && git push origin main
+```
+
+This is not a formality. Everything the subagents discovered — why a test needed a particular flag,
+which approach failed first and why, what the spec left unsaid — exists only in this session's
+context until it is written down. `gate:progress` fails if a spec reached `done` without an entry.
+
+Write the notes for someone picking this up cold. Findings the diff cannot show, decisions you made
+where the spec was silent, and anything still open. Do not restate the commit message.
+
+### 9. Report
 
 State: the criteria now covered, the files added or changed, the final `verify` summary, and
 anything you had to stop on.

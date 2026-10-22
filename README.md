@@ -60,6 +60,17 @@ A spec's `status` is a **ratchet** — `planned → in-progress → done`, forwa
 `scripts/spec-status.mjs`. Arming a spec only ever makes the gates stricter, which is why agents are
 trusted with it; disarming one is refused outright.
 
+### Durable memory
+
+A subagent's report lives only in the orchestrator's context. `claude-progress.md` is appended to at
+the end of every `/feature` run, through `scripts/record-progress.mjs` — the log is a protected path,
+so that script is the only way to write it, and it is **append-only**. Gate results in each entry are
+measured by the recorder rather than typed by the agent, so an entry cannot claim green while red,
+and `gate:progress` fails if a spec reached `done` without one.
+
+Specs record what must be true and git records what changed; this records what was _learned on the
+way_, which is the part no diff can reconstruct.
+
 ### The loop is test-first, and that is verified
 
 `/feature <SPEC-ID>` drives one spec from end to end:

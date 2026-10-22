@@ -35,7 +35,7 @@ jobs:
   # Split out so specification traceability reads as its own check in the PR, rather than being
   # buried in the verify log.
   harness:
-    name: harness gates (traceability, core purity)
+    name: harness gates (traceability, core purity, progress)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,6 +46,7 @@ jobs:
       - run: npm ci
       - run: npm run gate:ac-trace
       - run: npm run gate:core-purity
+      - run: npm run gate:progress
 
   # The real guarantee behind the protected-path hook. A hook runs inside the agent's own process
   # and is therefore advisory; this job runs outside it and cannot be talked round.

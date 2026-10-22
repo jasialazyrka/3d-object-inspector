@@ -51,6 +51,7 @@ const GATES = [
     skip: !hasUnitTests ? 'no unit tests yet' : null,
   },
   { name: 'ac-trace', script: 'gate:ac-trace', fast: false },
+  { name: 'progress', script: 'gate:progress', fast: false },
   { name: 'core-purity', script: 'gate:core-purity', fast: false },
   {
     name: 'test:e2e',

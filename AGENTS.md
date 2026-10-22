@@ -88,6 +88,29 @@ Consequences for you:
   stop and report it; weakening or deleting a committed test is the single worst thing you can do
   here, and it shows up as a diff on an already-committed file.
 
+## 5a. Recording what the run learned
+
+`claude-progress.md` is the project's durable memory. A subagent's report lives only in the
+orchestrator's context: compact the context or end the session and every finding is gone. Specs say
+what must be true, git says what changed — neither records what was _learned on the way_.
+
+At the end of a `/feature` run, after the push:
+
+```bash
+node scripts/record-progress.mjs --spec SPEC-00X --notes "..."
+```
+
+The log is a protected path, so this script is the only way to write it, and it is **append-only** —
+it refuses any write that would alter an existing entry. It fills in the commits, files and gate
+results itself by measuring them, so an entry cannot claim green while red. You supply only the part
+no diff can reconstruct:
+
+- findings a future reader could not get from the code,
+- decisions you made where the spec was silent,
+- anything you left open or unresolved.
+
+An entry with no notes is refused. `gate:progress` fails if a spec reached `done` without one.
+
 ## 6. Definition of done
 
 A change is done only when **all** of these pass:
@@ -97,7 +120,7 @@ npm run verify     # every gate, same locally and in CI
 ```
 
 which is: `typecheck` · `lint` · `format` · `test:unit` · `gate:coverage-policy` ·
-`gate:ac-trace` · `gate:core-purity` · `test:e2e`.
+`gate:ac-trace` · `gate:progress` · `gate:core-purity` · `test:e2e`.
 
 Coverage is governed by an explicit per-directory policy, not one global number: `src/core` must be
 at 100% on every metric, while `src/app` and `src/testing` are verified through E2E instead. A new

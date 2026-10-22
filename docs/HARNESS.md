@@ -33,7 +33,8 @@ to close that route and then to make the first route fast.
 │  .claude/skills/ ──── feature  (the loop, as one command)             │
 │                                                                       │
 │  .github/ci.yml ───── verify | harness gates | protected paths        │
-│  .harness/locked ──── the sentinel that arms the lock                 │
+│  .harness/locked ──── the sentinel that arms the lock
+  claude-progress.md ── append-only durable memory; the only write is via a script                 │
 └───────────────────────────────────────────────────────────────────────┘
                                    │
                           enforced boundary
